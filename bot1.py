@@ -3,18 +3,25 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher import FSMContext
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 import asyncio
 from key import api
 
 
 bot = Bot(token=api)
 dp = Dispatcher(bot, storage=MemoryStorage())
+
+
 kb = ReplyKeyboardMarkup(resize_keyboard=True)
 button = KeyboardButton(text='Рассчитать')
-button2 = KeyboardButton(text='Информация')
 
+kb2 = InlineKeyboardMarkup()
+button2 = InlineKeyboardButton(text='Рассчитать норму калорий', callback_data='calories')
+button3 = InlineKeyboardButton(text='Формулы расчёта', callback_data='formulas')
 kb.add(button)
-kb.add(button2)
+kb2.add(button2)
+kb2.add(button3)
+
 
 class UserState(StatesGroup):
 
@@ -22,11 +29,21 @@ class UserState(StatesGroup):
     growth = State()
     weight = State()
     imt = State()
+@dp.message_handler(text = 'Рассчитать')
+async def main_menu(message):
+    await message.answer('Выберите опцию', reply_markup=kb2)
 
-@dp.message_handler(text = 'Рассчитать') # хэндлер перехватил текст
-async def set_age(message):
-    await message.answer('Введите свой возраст.') # Реакция на текст
+@dp.callback_query_handler(text='formulas')
+async def formul(call):
+    await call.message.answer('Формула Миффлина-Сан Жеора: для мужчин: 10 х вес (кг) + 6,25 x рост (см) – 5 х возраст (г) + 5.')
+    await call.answer
+
+@dp.callback_query_handler(text = 'calories') # хэндлер перехватил текст
+async def set_age(call):
+    await call.message.answer('Введите свой возраст.') # Реакция на текст
+    await call.answer
     await UserState.age.set() # установка состояния
+
 
 @dp.message_handler(state=UserState.age)
 async def set_growth(message, state):
@@ -58,11 +75,11 @@ async def send_calories(message, state):
 @dp.message_handler(commands = ['start'])
 async def start_message(message):
     await message.answer('Привет! Я бот помогающий твоему здоровью! Для начала расчета суточной калорийности '
-                         'нажми Рассчитать', reply_markup = kb)
+                         'нажми Рассчитать', reply_markup=kb)
 
-# @dp.message_handler(text='Calories')
-# async def calories(message):
-#     await message.answer('Погнали считать калории')
+
+
+
 
 
 @dp.message_handler()
